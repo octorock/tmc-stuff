@@ -1,0 +1,36 @@
+# Parses the mapping from the tmc.map file into an format easier to use for strings:
+# <function_name>:<src_file>
+
+
+from os import path
+
+TMC_FOLDER = '../github'
+
+MAP_FILE_PATH = path.join(TMC_FOLDER, 'tmc.map')
+
+with open(MAP_FILE_PATH, 'r') as map_file:
+
+    # ignore header
+    line = map_file.readline()
+    while not line.startswith('rom'):
+        line = map_file.readline()
+    line = map_file.readline()
+    while not line.startswith('rom'): # The second line starting with 'rom' is the one we need
+        line = map_file.readline()
+
+    # Parse declarations
+    current_file = 'UNKNOWN'
+    for line in map_file:
+        if line.startswith(' .'):
+            # ignore this definition of filename
+            continue
+        elif line.startswith('  '):
+            parts = line.split()
+            if len(parts) == 2: # it is actually a symbol
+                # print(parts[1])
+                # print(parts)
+                print(f'{parts[1]}:{current_file}')
+        else:
+            # this defines the name
+            current_file = line.split('(')[0].strip()
+

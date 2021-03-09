@@ -7,3 +7,5 @@ The python scripts used to first extract the scripts from the rom and create asm
 [Convert u8 array to u16 array](u8tou16array.py)  
 [Convert u8 array to u32 array](u8tou32array.py)
 
+### Find out where scripts belong to
+[sort_scripts.sh](sort_scripts.sh)
