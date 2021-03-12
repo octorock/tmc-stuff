@@ -3,8 +3,7 @@
 
 
 from os import path
-
-TMC_FOLDER = '../github'
+from common import TMC_FOLDER
 
 MAP_FILE_PATH = path.join(TMC_FOLDER, 'tmc.map')
 
