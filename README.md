@@ -18,3 +18,16 @@ Fork of [cexplore](https://github.com/SBird1337/cexplore) that uses the tmc repo
 
 ### Ghidra
 Some notes on the use of Ghidra: [ghidra.md](ghidra.md)
+
+### Finding Pointers
+Some scripts to find things in the rom that might point to other things.
+[list_filestructure.sh](list_filestructure.sh): Reads the structure of the rom from the `.map` file and stores it in `tmp/structure.txt`  
+[get_location.py](get_location.py): Enter a hex address and this script tells you in which file it is defined  
+[find_pointers.py](find_pointers.py): Searches for everything that looks like a pointer  
+[consecutive_pointers.py](consecutive_pointers.py): Searches in the list of possible pointers for multiple consecutive pointers
+
+### Enums
+Reads those mysterious enum like looking things after `gUnk_0812AAE8`: [read_enums.py](read_enums.py)
+
+### Annotating rodata
+Annotates files in the data folder with the files the label was referenced from: [annotate_rodata.sh](annotate_rodata.sh)
