@@ -1,4 +1,4 @@
-from common import read_baserom, bytes_to_u32
+from utils import read_baserom, bytes_to_u32
 
 
 ENUM_STARTS = [

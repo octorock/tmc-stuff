@@ -1,6 +1,6 @@
 from colors import Color
 
-MIN_CONSECUTIVE_PTRS = 20
+MIN_CONSECUTIVE_PTRS = 2
 
 with open('tmp/rom_ptrs_at_locs.txt') as file:
     ptrs = []
@@ -11,8 +11,9 @@ with open('tmp/rom_ptrs_at_locs.txt') as file:
         if addr - last > 4:
             # Not consecutive anymore
             if len(ptrs) >= MIN_CONSECUTIVE_PTRS:
-                print(f'{Color.Green}prev: {len(ptrs)}{Color.Off}')
-                print(f'starting at: {ptrs[0].split("@")[1]}')
+                #print(f'{Color.Green}prev: {len(ptrs)}{Color.Off}')
+                #print(f'starting at: {ptrs[0].split("@")[1]}')
+                print(f'array of {len(ptrs)} at: {ptrs[0].split("@")[1]}')
                 #print(''.join(ptrs))
             ptrs = []
         ptrs.append(line)

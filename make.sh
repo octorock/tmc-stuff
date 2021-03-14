@@ -11,7 +11,7 @@ TMC_FOLDER="../github"
 cd $TMC_FOLDER
 shopt -s nocasematch
 
-make -j$(nproc) 2> >(while read line; do 
+make -j$(nproc) DINFO=0 2> >(while read line; do 
 # stderr
 if [[ $line =~ "error" ]]; then
     echo -e "\e[01;31m$line\e[0m" >&2;
