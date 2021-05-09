@@ -18,12 +18,17 @@ Fork of [cexplore](https://github.com/SBird1337/cexplore) that uses the tmc repo
 
 ### Ghidra
 Some notes on the use of Ghidra: [ghidra.md](ghidra.md)
+| Script | Function
+|---|---|
+| [ghidra_replace.py](ghidra_replace.py) | Improve Ghidra decompiler output |
+| [export_to_cexplore.py](export_to_cexplore.py) | Export NONMATCH function to cexplore |
 
 ### Finding Pointers
 Some scripts to find things in the rom that might point to other things.
 | Script | Function |
 |---|---|
 |[list_filestructure.sh](list_filestructure.sh)|Reads the structure of the rom from the `.map` |file and stores it in `tmp/structure.txt`  |
+| python parse_mapping.py > tmp/symbols.txt | needed for python scripts |
 |[get_location.py](get_location.py) | Enter a hex address and this script tells you in which file it is defined |
 |[find_pointers.py](find_pointers.py) | Searches for everything that looks like a pointer |  
 |[consecutive_pointers.py](consecutive_pointers.py) | Searches in the list of possible pointers for multiple consecutive pointers |
