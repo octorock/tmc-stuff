@@ -23,6 +23,13 @@ Some notes on the use of Ghidra: [ghidra.md](ghidra.md)
 | [ghidra_replace.py](ghidra_replace.py) | Improve Ghidra decompiler output |
 | [export_to_cexplore.py](export_to_cexplore.py) | Export NONMATCH function to cexplore |
 
+### The Little Hat
+Tool to find pointers based on the differences between versions: [octorock/the-little-hat](https://github.com/octorock/the-little-hat)
+Also contains further plugins to help with decompilation.
+
+### Split asm files
+Split asm files into functions in `asm/non_matching` folder and ouput the corresponding `ASM_FUNC` macro calls: [split_asm.py](split_asm.py)
+
 ### Finding Pointers
 Some scripts to find things in the rom that might point to other things.
 | Script | Function |

@@ -55,13 +55,14 @@ add_replacement(r'undefined2', 'u16')
 add_replacement(r'undefined4', 'u32')
 
 # Word
-add_replacement(r'\(int\)\*\(short \*\)\(\(int\)&(\S*) \+ 2\)', r'\1.HALF.HI')
+add_replacement(r'\([u,s]32\)\*\([u,s]16 ?\*\)\(\([u,s]32\)&(\S*) \+ 2\)', r'\1.HALF.HI')
+add_replacement(r'\*\([u,s]16 ?\*\)\(\([u,s]32\)&(\S*) \+ 2\)', r'\1.HALF.HI')
 add_replacement(r'\*\([u,s]16\*\)\&this->(\S*)', r'this->\1.HALF.LO')
 add_replacement(r'(?:\(s32\))?\* ?\([s,u]16\* ?\)\(\(s32\) ?& ?this->(\S*) \+ 2\)', r'this->\1.HALF.HI')
 add_replacement(r'\._2_2_', r'.HALF.HI')
 
 # Half Word
-add_replacement(r'\*\(u8\*\)&this->(\S*)', r'this->\1.HALF.LO')
+add_replacement(r'\* ?\(u8\*\)&this->(\S*)', r'this->\1.HALF.LO')
 add_replacement(r'\(u8\*\)\(\(s32\)&(\S*) \+ 1\)', r'\1.HALF.HI')
 add_replacement(r'\(s32\)\(u32\)\(u16\)([\w\->]*)', r'\1.HWORD')
 add_replacement(r'\(s32\)\(u32\) \* \(u16\*\)&([\w\->]*)', r'\1.HALF.LO')

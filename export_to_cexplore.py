@@ -6,6 +6,7 @@ from urllib.parse import quote_plus
 import sys
 import os
 from common import TMC_FOLDER
+import pyperclip
 
 CEXPLORE_URL='http://cexplore.henny022.de/#'
 
@@ -50,7 +51,7 @@ def find_source_file(name: str) -> Optional [str]:
         for line in f:
             if line.startswith(' .text'):
                 current_file = line.split()[3]
-            elif name in line:
+            elif line.strip().endswith(name):
                 return current_file[0:-2] + '.c'
         return None
 
@@ -66,6 +67,8 @@ def extract_nonmatching_section(inc_path: str, src_file: str) -> Optional[str]:
             if in_headers:
                 if '{' in line and not 'struct' in line:
                     in_headers = False
+                elif 'NONMATCH' in line or 'ASM_FUNC' in line:
+                    in_headers = False
                 else:
                     headers.append(line)
 
@@ -75,6 +78,10 @@ def extract_nonmatching_section(inc_path: str, src_file: str) -> Optional[str]:
         match = re.search(r'NONMATCH\(\"'+inc_path+r'\", ?(.*?)\) ?{(.*?)END_NONMATCH', ''.join(data), re.MULTILINE | re.DOTALL)
         if match:
             return ''.join(headers) + '// end of existing headers\n\n' + match.group(1) + ' {'+ match.group(2)
+
+        match = re.search(r'ASM_FUNC\(\"'+inc_path+r'\", ?(.*?)\)', ''.join(data), re.MULTILINE)
+        if match:
+            return ''.join(headers) + '// end of existing headers\n\n' + match.group(1) + ') {\n\n}'
     return None
 
 def prepare_asm(inc_file: str, name: str) -> str:
@@ -114,12 +121,14 @@ def main():
 
     src = extract_nonmatching_section(inc_path, src_file)
     if src is None:
-        print(f'No NONMATCH section found for {inc_path} in {src_file}')
+        print(f'No NONMATCH or ASM_FUNC section found for {inc_path} in {src_file}')
         return
 
     asm = prepare_asm(inc_file, name)    
 
-    print(generate_cexplore_url(src, asm))
+    url = generate_cexplore_url(src, asm)
+    pyperclip.copy(url)
+    print('Copied url to cexplore to clipboard.')
 
 if __name__ == '__main__':
     main()
