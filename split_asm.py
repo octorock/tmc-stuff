@@ -19,14 +19,20 @@ def parse_file(filepath: str) -> List[Func]:
     with open(filepath, 'r') as f:
         current_function = None
         current_lines = []
+        ignore_next_line = False
 
         for line in f:
+            if ignore_next_line:
+                ignore_next_line = False
+                continue
+
             if 'thumb_func_start' in line:
                 if current_function is not None:
                     result.append(Func(current_function, current_lines))
                     current_lines = []
             
                 current_function = line.split()[1]
+                ignore_next_line = True
             elif current_function is not None and line.strip() != '':
                 current_lines.append(line)
 
