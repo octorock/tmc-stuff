@@ -3,6 +3,8 @@ import os
 import re
 from dataclasses import dataclass
 import csv
+import yaml
+import parser
 
 @dataclass
 class Incbin:
@@ -13,7 +15,7 @@ class Incbin:
     variant:str=''
     label:str=''
 
-def main() -> None:
+def extract_all_incbins() -> None:
 
     incbins = []
 
@@ -37,7 +39,7 @@ def main() -> None:
 def parse_file(filepath: str, name: str, incbins:list[Incbin]) -> None:
     output_lines = []
 
-    all_variants = ['USA', 'EU', 'JP', 'DEMO']
+    all_variants = ['USA', 'EU', 'JP', 'DEMO_USA', 'DEMO_JP']
 
     current_variants = all_variants.copy()
     remaining_variants = all_variants.copy()
@@ -50,7 +52,7 @@ def parse_file(filepath: str, name: str, incbins:list[Incbin]) -> None:
         for line in file:
             match = re.search('\.incbin \"(\S*)\", (\w*), (\w*)', line)
             if match!= None:
-                variant = '_'.join(current_variants)
+                variant = '-'.join(current_variants)
                 print(match.groups(), variant, label, count, name)
 
                 bin_file = os.path.join('assets', name, label + (('_' + str(count)) if count>0 else '') + (('_' + variant) if current_variants != all_variants else '') + '.bin')
@@ -168,7 +170,7 @@ def build_assets_list(maps, roms, target_variant):
                 baserom = parts[1]
                 start = int(parts[2], 16)
                 size = int(parts[3], 16)
-                variants = parts[4].split('_')
+                variants = parts[4].split('-')
                 label = parts[5].strip()
                 if target_variant not in variants:
                     # This incbin is not used by the target variant
@@ -218,7 +220,8 @@ def get_variant(baserom):
         'baserom.gba': 'USA',
         'baserom_eu.gba': 'EU',
         'baserom_jp.gba': 'JP',
-        'baserom_demo.gba': 'DEMO'
+        'baserom_demo.gba': 'DEMO_USA',
+        'baserom_demo_jp.gba': 'DEMO_JP',
     }
     return map[baserom]
 
@@ -227,7 +230,8 @@ def read_rom(variant):
         'USA': 'baserom.gba',
         'EU': 'baserom_eu.gba',
         'JP': 'baserom_jp.gba',
-        'DEMO': 'baserom_demo.gba'
+        'DEMO_USA': 'baserom_demo.gba',
+        'DEMO_JP': 'baserom_demo_jp.gba',
     }
     with open(os.path.join(TMC_FOLDER, map[variant]), 'rb') as file:
         baserom = bytearray(file.read())
@@ -238,20 +242,189 @@ def build_for_other_variants():
     maps['USA'] = read_mapping('')
     maps['EU'] = read_mapping('_eu')
     maps['JP'] = read_mapping('_jp')
-    maps['DEMO'] = read_mapping('_demo')
+    maps['DEMO_USA'] = read_mapping('_demo_usa')
+    maps['DEMO_JP'] = read_mapping('_demo_jp')
     roms = {}
     roms['USA'] = read_rom('USA')
     roms['EU'] = read_rom('EU')
     roms['JP'] = read_rom('JP')
-    roms['DEMO'] = read_rom('DEMO')
+    roms['DEMO_USA'] = read_rom('DEMO_USA')
+    roms['DEMO_JP'] = read_rom('DEMO_JP')
 
     build_assets_list(maps, roms, 'USA')
     build_assets_list(maps, roms, 'EU')
     build_assets_list(maps, roms, 'JP')
-    build_assets_list(maps, roms, 'DEMO')
+    build_assets_list(maps, roms, 'DEMO_USA')
+    build_assets_list(maps, roms, 'DEMO_JP')
+
+
+
+# Allow to parse expressions instead of just hex numbers to be able to quickly adapt offsets for different versions
+def parse_hex(text):
+    code = parser.expr(text).compile()
+    return eval(code)
+
+@dataclass
+class Asset:
+    path: str
+    mode: str
+    start: int
+    size: int
+
+def read_asset_file(variant):
+    assets = {}
+    with open(os.path.join(TMC_FOLDER, f'assets_{variant}.csv'), 'r') as file:
+        for line in file:
+            (path,start,size,mode) = line.split(',')
+            mode = mode.strip()
+            start = parse_hex(start)
+            size = parse_hex(size)
+            assets[path] = Asset(path, mode, start, size)
+    return assets
+
+
+# Are all values in the array the same
+def all_same(arr):
+    return len(set(iter(arr.values()))) <= 1
+
+def merge_asset_files():
+
+    all_variants = ['USA', 'JP', 'EU', 'DEMO_USA', 'DEMO_JP']
+    assets = {}
+    index = {}
+    current_offsets = {}
+    for variant in all_variants:
+        assets[variant] = read_asset_file(variant)
+        index[variant] = 0
+        current_offsets[variant] = 0
+
+    output = []
+
+    incbins = []
+
+    with open('incbins.csv', 'r') as file:
+        for line in file:
+            parts =  line.split(',')
+            path = parts[0]
+            baserom = parts[1]
+            start = int(parts[2], 16)
+            size = int(parts[3], 16)
+            variants = parts[4].split('-')
+            label = parts[5].strip()
+            incbins.append((path, start, variants))
+            if variants[0] == '':
+                print('An asset without variants found:')
+                print(path, start, variants)
+                print('This incbin is never compiled and can be deleted?')
+                return
+
+    # Sort incbins. The files themselves are already sorted, so we just need to sort the files in the global scope
+    files = {}
+    for incbin in incbins:
+        file = incbin[0].split('/')[1]
+        if file == 'tilesets':
+            file = 'data_08132B30' # Quick hack because the three test tilesets were moved from their original path
+
+        variants = incbin[2]
+        print(variants)
+        if not file in files:
+            files[file] = {'incbins': []}
+        files[file]['incbins'].append(incbin)
+        if 'start' not in files[file] and 'USA' in variants:
+            files[file]['start'] = incbin[1]
+
+    # manually place starts for files not in USA
+    files['strings']['start'] = 0x8C0FE0 # after data_08132B30
+    files['demoScreen']['start'] = 0x127280 # after playerItem15
+
+    arr = []
+
+    for key in files:
+        if not 'start' in files[key]:
+            print(key)
+            raise Exception()
+        arr.append((key, files[key]['start']))
+
+    arr = sorted(arr, key=lambda i:i[1])
+
+    # Insert the incbins now sorted
+    incbins = []
+
+    for (a,b) in arr:
+        for incbin in files[a]['incbins']:
+            incbins.append(incbin)
+
+    
+
+    for (path, start, variants) in incbins:
+        data = {
+            'path': path,
+        }
+        if len(variants) != len(all_variants): # Omit variants if all of them use this
+            data['variants'] = variants
+
+
+        # For now show all starts and sizes
+        starts = {}
+        sizes = {}
+        for variant in variants:
+            print(variant, variants)
+            if path in assets[variant]:
+                asset = assets[variant][path]
+                starts[variant] = asset.start
+                sizes[variant] = asset.size
+                if asset.mode != '':
+                    data['type'] = asset.mode
+            else:
+                raise Exception()
+
+        if 'USA' in variants: # We have a base to reference, can use relative offsets
+            changed_offsets = []
+            for variant in variants:
+                if variant == 'USA':
+                    continue
+                offset = starts[variant] - starts['USA']
+                if offset != current_offsets[variant]:
+                    current_offsets[variant] = offset
+                    changed_offsets.append((variant, offset))
+            if len(changed_offsets) != 0:
+                offsets = {}
+                for (variant, offset) in changed_offsets:
+                    offsets[variant] = offset
+                output.append({
+                    'offsets': offsets
+                })
+            data['start'] = starts['USA']
+        else:
+            # Need the starts for all variants
+            data['starts'] = starts
+
+        if all_same(sizes):
+            data['size'] = sizes[variants[0]]
+
+        else:
+            data['sizes'] = sizes
+
+
+        output.append(data)
+
+
+    # Represent all integers as hex numbers
+    # https://stackoverflow.com/a/42504639
+    def hexint_presenter(dumper, data):
+        return dumper.represent_int(hex(data))
+    yaml.add_representer(int, hexint_presenter)
+
+    with open(os.path.join(TMC_FOLDER, 'assets.yaml'), 'w') as file:
+        yaml.dump(output, file, sort_keys=False)
+
+
+    # with open('tmp/test.yaml') as file:
+    #     data = yaml.safe_load(file)
+    #     print(data)
 
 
 if __name__ == '__main__':
-    main()
+    extract_all_incbins()
     build_for_other_variants()
-
+    merge_asset_files()
