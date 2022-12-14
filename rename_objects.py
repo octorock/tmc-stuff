@@ -64,6 +64,13 @@ while True:
             rename_file(f'{TMC_FOLDER}/data/const/object/{old_file}.s', f'{TMC_FOLDER}/data/const/object/{new_file}.s')
             rename_file(f'{TMC_FOLDER}/asm/non_matching/{old_file}', f'{TMC_FOLDER}/asm/non_matching/{new_file}')
 
+            for root, dir, files in os.walk(f'{TMC_FOLDER}/data/scripts'):
+                for file in files:
+                    path = os.path.join(root, file)
+                    new_path = path.replace(old_file, new_file).replace(old_name, new_name)
+                    if new_path != path:
+                        rename_file(path, new_path)
+
     header = f'''/**
  * @file {new_file}.c
  * @ingroup Objects

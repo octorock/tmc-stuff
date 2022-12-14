@@ -1,1 +1,1 @@
-TMC_FOLDER='../github'
+TMC_FOLDER='../tmc'

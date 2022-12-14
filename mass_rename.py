@@ -2,6 +2,9 @@ from common import TMC_FOLDER
 import pyperclip
 import subprocess
 
+# Have replacements in the form old,new in the clipboard.
+# Then start this script. It will first tell you what to replace.
+
 def rename_all(renames):
     with open('/tmp/replacements.sed', 'w') as file:
         for arr in renames:
