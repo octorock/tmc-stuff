@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build USA",
+            "type": "shell",
+            "command": "make -j",
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "kill mGBA",
+            "type": "shell",
+            "command": "killall mgba-qt || true"
+        }
+    ]
+}
